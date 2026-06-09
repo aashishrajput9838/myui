@@ -11,6 +11,7 @@ import {
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { User } from "@/types";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
@@ -27,23 +28,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
       if (firebaseUser) {
-        // Check if user exists in Firestore
-        const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-        
-        if (!userDoc.exists()) {
-          // Create new user in Firestore
-          const newUser: User = {
+        try {
+          // Check if user exists in Firestore
+          const userRef = doc(db, "users", firebaseUser.uid);
+          const userDoc = await getDoc(userRef);
+          
+          if (!userDoc.exists()) {
+            // Create new user in Firestore
+            const newUser: User = {
+              uid: firebaseUser.uid,
+              name: firebaseUser.displayName || "Anonymous",
+              email: firebaseUser.email || "",
+              photoURL: firebaseUser.photoURL || "",
+              createdAt: serverTimestamp(),
+            };
+            await setDoc(userRef, newUser);
+            setUser(newUser);
+          } else {
+            setUser(userDoc.data() as User);
+          }
+        } catch (error: any) {
+          console.error("🔥 Firestore Auth Error:", error);
+          
+          if (error.code === 'not-found' || error.message?.includes('Database \'(default)\' not found')) {
+            toast.error("Database connection issue. Please ensure Firestore is enabled in your Firebase Console.");
+          } else {
+            toast.error("Failed to load user profile. Please check your connection.");
+          }
+          
+          // Still allow the app to run with basic auth info if firestore fails
+          setUser({
             uid: firebaseUser.uid,
             name: firebaseUser.displayName || "Anonymous",
             email: firebaseUser.email || "",
             photoURL: firebaseUser.photoURL || "",
-            createdAt: serverTimestamp(),
-          };
-          await setDoc(doc(db, "users", firebaseUser.uid), newUser);
-          setUser(newUser);
-        } else {
-          setUser(userDoc.data() as User);
+            createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any,
+          });
         }
       } else {
         setUser(null);
@@ -56,18 +78,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Error signing in with Google", error);
+      toast.success("Successfully signed in!");
+    } catch (error: any) {
+      console.error("Google Sign-In Error:", error);
+      toast.error(error.message || "Failed to sign in with Google");
     }
   };
 
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
-    } catch (error) {
-      console.error("Error signing out", error);
+      toast.success("Signed out successfully");
+    } catch (error: any) {
+      console.error("Sign-Out Error:", error);
+      toast.error("Failed to sign out");
     }
   };
 

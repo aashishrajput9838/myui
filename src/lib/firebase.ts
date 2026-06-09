@@ -14,13 +14,18 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+// Debug log to verify environment variables in the browser
+if (typeof window !== "undefined") {
+  console.log("🛠️ Firebase Initializing with Project ID:", firebaseConfig.projectId);
+}
+
+// Initialize Firebase singleton
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Analytics initialization (client-side only)
+// Optional: Initialize Analytics
 let analytics: Analytics | undefined;
 if (typeof window !== "undefined") {
   isSupported().then((supported) => {
