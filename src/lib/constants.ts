@@ -2,9 +2,9 @@
  * Global constants and configuration for MyUI
  */
 export const APP_CONFIG = {
-  NAME: "MyUI",
+  NAME: "myui",
   DESCRIPTION: "Save and Organize Your Favorite Website Inspirations",
-  URL: "https://myui.com",
+  URL: "https://myui-d663d.web.app", // Firebase hosting default URL
 };
 
 export const API_ROUTES = {

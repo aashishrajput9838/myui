@@ -5,6 +5,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 
+import { APP_CONFIG } from "@/lib/constants";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -16,21 +18,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MyUI - Save and Organize Your Favorite Website Inspirations",
+  title: `${APP_CONFIG.NAME} - ${APP_CONFIG.DESCRIPTION}`,
   description: "Build your personal library of beautiful websites, UI patterns, and design inspirations.",
   keywords: ["design", "ui", "ux", "inspiration", "web design", "developer tools"],
-  authors: [{ name: "MyUI Team" }],
+  authors: [{ name: "myui Team" }],
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://myui.com",
-    title: "MyUI - Save and Organize Your Favorite Website Inspirations",
+    url: APP_CONFIG.URL,
+    title: `${APP_CONFIG.NAME} - ${APP_CONFIG.DESCRIPTION}`,
     description: "Build your personal library of beautiful websites, UI patterns, and design inspirations.",
-    siteName: "MyUI",
+    siteName: APP_CONFIG.NAME,
   },
   twitter: {
     card: "summary_large_image",
-    title: "MyUI - Save and Organize Your Favorite Website Inspirations",
+    title: `${APP_CONFIG.NAME} - ${APP_CONFIG.DESCRIPTION}`,
     description: "Build your personal library of beautiful websites, UI patterns, and design inspirations.",
   },
 };
