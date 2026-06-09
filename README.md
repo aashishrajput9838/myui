@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# <p align="center">✨ MyUI - Premium Website Inspiration Gallery</p>
 
-## Getting Started
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js" alt="Next.js" />
+  <img src="https://img.shields.io/badge/Firebase-v12-orange?style=for-the-badge&logo=firebase" alt="Firebase" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-v4-blue?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Puppeteer-Latest-green?style=for-the-badge&logo=puppeteer" alt="Puppeteer" />
+</p>
 
-First, run the development server:
+---
 
+**MyUI** is a sophisticated platform designed for designers and developers to capture, organize, and curate website inspirations effortlessly. Built with a focus on speed, performance, and a premium user experience.
+
+> [!TIP]
+> Just paste a URL, and let MyUI handle the rest—from high-resolution full-page screenshots to metadata extraction.
+
+---
+
+## 🚀 Key Features
+
+| Feature | Description |
+| :--- | :--- |
+| 📸 **Auto-Capture** | Automatically generate high-quality full-page screenshots using Puppeteer. |
+| 🏷️ **Metadata Extraction** | Intelligent fetching of page titles, descriptions, and favicons. |
+| 📂 **Smart Collections** | Organize your inspirations into custom themed folders for easy access. |
+| ❤️ **Favorites** | One-click favoriting to keep your top-tier inspirations front and center. |
+| 🔍 **Real-time Search** | Instant global search across website names, URLs, and descriptions. |
+| 🌗 **Dark Mode** | A beautiful, premium interface with support for both Light and Dark themes. |
+| 📱 **Responsive** | A mobile-first approach ensuring a seamless experience across all devices. |
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Framework**: [Next.js 15+](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components**: [Shadcn/UI](https://ui.shadcn.com/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **State Management**: React Hooks & Context API
+
+### Backend & Infrastructure
+- **Authentication**: [Firebase Auth](https://firebase.google.com/products/auth) (Google & Email)
+- **Database**: [Cloud Firestore](https://firebase.google.com/products/firestore)
+- **Storage**: [Firebase Storage](https://firebase.google.com/products/storage)
+- **Screenshot Engine**: [Puppeteer](https://pptr.dev/) (Headless Chrome)
+
+---
+
+## 🏗️ Architecture
+
+MyUI follows a professional service-oriented architecture to ensure maintainability:
+
+- **Service Layer**: Decoupled Firestore logic in `src/services/`.
+- **Custom Hooks**: Reusable business logic and data subscriptions in `src/hooks/`.
+- **API Routes**: Serverless functions for heavy operations like Puppeteer in `src/app/api/`.
+- **Atomic Components**: Reusable UI elements built on top of Radix UI primitives.
+
+---
+
+## ⚙️ Getting Started
+
+### Prerequisites
+- Node.js 18.17 or later
+- A Firebase project with Auth, Firestore, and Storage enabled
+
+### 1. Installation
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-username/myui.com.git
+cd myui.com
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Environment Configuration
+Create a `.env.local` file in the root directory:
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Local Development
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🛡️ Security Rules
 
-To learn more about Next.js, take a look at the following resources:
+Ensure your Firestore rules are deployed for data isolation:
+```javascript
+match /websites/{websiteId} {
+  allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+  allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+}
+```
+*(Full rules available in `firestore.rules`)*
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📄 License
+Distributed under the **MIT License**. See `LICENSE` for more information.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+<p align="center">
+  Built with ❤️ by the MyUI Team
+</p>
