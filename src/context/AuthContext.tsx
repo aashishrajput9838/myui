@@ -1,12 +1,16 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { 
+  onAuthStateChanged, 
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut as firebaseSignOut
+} from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { User } from "@/types";
 import { toast } from "sonner";
-
-// Lazy-loaded Firebase
-import { app } from "@/lib/firebase";
 
 interface AuthContextType {
   user: User | null;
@@ -22,75 +26,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
-    let isMounted = true;
-
-    const initAuth = async () => {
-      const { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut } = await import("firebase/auth");
-      const { getFirestore } = await import("firebase/firestore");
-      
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-
-      unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        setLoading(true);
-        if (!isMounted) return;
-        
-        if (firebaseUser) {
-          try {
-            const userRef = doc(db, "users", firebaseUser.uid);
-            const userDoc = await getDoc(userRef);
-            
-            if (!userDoc.exists()) {
-              const newUser: User = {
-                uid: firebaseUser.uid,
-                name: firebaseUser.displayName || "Anonymous",
-                email: firebaseUser.email || "",
-                photoURL: firebaseUser.photoURL || "",
-                createdAt: serverTimestamp(),
-              };
-              await setDoc(userRef, newUser);
-              if (isMounted) setUser(newUser);
-            } else {
-              if (isMounted) setUser(userDoc.data() as User);
-            }
-          } catch (error: any) {
-            console.error("🔥 Firestore Auth Error:", error);
-            toast.error("Failed to load user profile. Please check your connection.");
-            
-            if (isMounted) {
-              setUser({
-                uid: firebaseUser.uid,
-                name: firebaseUser.displayName || "Anonymous",
-                email: firebaseUser.email || "",
-                photoURL: firebaseUser.photoURL || "",
-                createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any,
-              });
-            }
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
+      if (firebaseUser) {
+        try {
+          const userRef = doc(db, "users", firebaseUser.uid);
+          const userDoc = await getDoc(userRef);
+          
+          if (!userDoc.exists()) {
+            const newUser: User = {
+              uid: firebaseUser.uid,
+              name: firebaseUser.displayName || "Anonymous",
+              email: firebaseUser.email || "",
+              photoURL: firebaseUser.photoURL || "",
+              createdAt: serverTimestamp(),
+            };
+            await setDoc(userRef, newUser);
+            setUser(newUser);
+          } else {
+            setUser(userDoc.data() as User);
           }
-        } else {
-          if (isMounted) setUser(null);
+        } catch (error: any) {
+          console.error("🔥 Firestore Auth Error:", error);
+          toast.error("Failed to load user profile. Please check your connection.");
+          
+          setUser({
+            uid: firebaseUser.uid,
+            name: firebaseUser.displayName || "Anonymous",
+            email: firebaseUser.email || "",
+            photoURL: firebaseUser.photoURL || "",
+            createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any,
+          });
         }
-        
-        if (isMounted) setLoading(false);
-      });
-    };
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
 
-    initAuth();
-
-    return () => {
-      isMounted = false;
-      unsubscribe?.();
-    };
+    return () => unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    
     try {
-      const { getAuth, GoogleAuthProvider, signInWithPopup } = await import("firebase/auth");
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
-      
-      const auth = getAuth(app);
       await signInWithPopup(auth, provider);
       toast.success("Successfully signed in!");
     } catch (error: any) {
@@ -101,8 +82,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      const { getAuth, signOut: firebaseSignOut } = await import("firebase/auth");
-      const auth = getAuth(app);
       await firebaseSignOut(auth);
       toast.success("Signed out successfully");
     } catch (error: any) {

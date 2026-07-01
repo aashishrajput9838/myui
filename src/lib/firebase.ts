@@ -1,4 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,11 +15,8 @@ const firebaseConfig = {
 
 // Initialize Firebase app once
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
-// Lazy-load Firebase modules to reduce initial bundle size
-export const getAuth = async () => (await import("firebase/auth")).getAuth(app);
-export const getFirestore = async () => (await import("firebase/firestore")).getFirestore(app);
-export const getStorage = async () => (await import("firebase/storage")).getStorage(app);
-
-// Keep direct exports for backward compatibility (use lazy versions for better performance)
-export { app };
+export { app, auth, db, storage };
