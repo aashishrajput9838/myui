@@ -1,12 +1,3 @@
-import { v2 as cloudinary } from "cloudinary";
-
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
-
 interface ScreenshotResult {
   thumbnailUrl: string;
   title: string;
@@ -29,7 +20,7 @@ export const ScreenshotService = {
       console.log("🚀 Capturing screenshot via Microlink for:", hostname);
       
       // Use Microlink API to get screenshot and metadata
-      const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&meta=true&embed=screenshot.url&waitFor=5000`;
+      const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&meta=true&waitFor=5000`;
       
       const response = await fetch(microlinkUrl);
       if (!response.ok) {
@@ -45,26 +36,27 @@ export const ScreenshotService = {
       const screenshotUrl = data.data.screenshot?.url;
       const title = data.data.title || hostname;
       const description = data.data.description || `Saved website from ${hostname}`;
-      
-      console.log("☁️ Uploading to Cloudinary...");
-      
-      // Upload screenshot from Microlink to Cloudinary
-      const uploadResult = await cloudinary.uploader.upload(screenshotUrl, {
-        folder: "myui-screenshots",
-        resource_type: "image",
-      });
-      
       const faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
       
+      console.log("✅ Screenshot captured successfully!");
+      
       return {
-        thumbnailUrl: uploadResult.secure_url,
+        thumbnailUrl: screenshotUrl,
         title,
         description,
         faviconUrl,
       };
     } catch (error: any) {
       console.error("❌ Screenshot error details:", error);
-      throw error;
+      // Fallback to placeholder if anything fails
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname;
+      return {
+        thumbnailUrl: `https://placehold.co/1200x800/3b82f6/ffffff?text=${encodeURIComponent(hostname)}`,
+        title: hostname,
+        description: `Saved website from ${hostname}`,
+        faviconUrl: `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`,
+      };
     }
   },
 };
