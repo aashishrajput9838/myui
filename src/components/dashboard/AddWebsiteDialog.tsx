@@ -72,7 +72,7 @@ export function AddWebsiteDialog() {
         throw new Error(result.error || "Failed to process website");
       }
 
-      const { thumbnailUrl, title, description, favicon } = result.data;
+      const { thumbnailUrl, title, description, faviconUrl } = result.data;
 
       // Save using hook
       await addWebsite({
@@ -81,7 +81,7 @@ export function AddWebsiteDialog() {
         websiteName: title || new URL(url).hostname,
         url,
         thumbnailUrl,
-        faviconUrl: favicon,
+        faviconUrl: faviconUrl,
         websiteTitle: title || "",
         websiteDescription: description || "",
         tags: [],

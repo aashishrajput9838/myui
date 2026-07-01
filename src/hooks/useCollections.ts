@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Collection } from "@/types";
+import { Collection, Website } from "@/types";
 import { FirestoreService } from "@/services/firestore";
 import { useAuth } from "@/context/AuthContext";
 

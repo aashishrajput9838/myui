@@ -19,10 +19,10 @@ import {
   Mail,
   User as UserIcon
 } from "lucide-react";
-import { format } from "date-fns";
 import { useWebsites } from "@/hooks/useWebsites";
 import { useCollections } from "@/hooks/useCollections";
 import Link from "next/link";
+import { formatDate } from "@/lib/utils";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -56,7 +56,7 @@ export default function ProfilePage() {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
-                Joined {user.createdAt?.seconds ? format(new Date(user.createdAt.seconds * 1000), "MMMM yyyy") : "Recently"}
+                Joined {formatDate(user.createdAt)}
               </div>
               <Button variant="outline" className="w-full" asChild>
                 <Link href="/settings">Edit Profile</Link>
