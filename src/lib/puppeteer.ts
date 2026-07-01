@@ -15,17 +15,24 @@ export const PuppeteerUtils = {
    * Launch a browser instance with optimized settings
    */
   launchBrowser: async () => {
+    console.log("Launching Puppeteer...");
     return puppeteer.launch({
       headless: true,
       args: [
-        "--no-sandbox", 
+        "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--disable-accelerated-2d-canvas",
         "--no-first-run",
         "--no-zygote",
-        "--single-process",
-        "--disable-gpu"
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--disable-extensions",
+        "--disable-default-apps",
+        "--disable-background-networking",
+        "--disable-background-timer-throttling",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-renderer-backgrounding",
       ],
     });
   },
@@ -34,21 +41,28 @@ export const PuppeteerUtils = {
    * Extract metadata and take a screenshot of a URL
    */
   processUrl: async (browser: Browser, url: string) => {
+    console.log("Creating new page...");
     const page = await browser.newPage();
     
-    // Set a realistic viewport
+    console.log("Setting viewport...");
     await page.setViewport({ width: 1440, height: 900 });
     
-    // Set a realistic user agent
-    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    console.log("Setting user agent...");
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
     try {
+      console.log("Navigating to URL:", url);
       // Go to the URL with a timeout
       await page.goto(url, { 
-        waitUntil: "networkidle2", 
-        timeout: 45000 
+        waitUntil: "domcontentloaded", 
+        timeout: 90000 // 90 seconds!
       });
 
+      console.log("Page loaded! Waiting to settle...");
+      // Wait a little bit to let the page settle
+      await page.waitForTimeout(1000);
+
+      console.log("Extracting metadata...");
       // Extract metadata
       const metaData = await page.evaluate(() => {
         const getMeta = (name: string) => 
@@ -64,12 +78,15 @@ export const PuppeteerUtils = {
         };
       });
 
+      console.log("Metadata extracted:", metaData);
+
       // Handle relative favicon URLs
       if (metaData.favicon && !metaData.favicon.startsWith("http")) {
         const urlObj = new URL(url);
         metaData.favicon = `${urlObj.origin}${metaData.favicon.startsWith("/") ? "" : "/"}${metaData.favicon}`;
       }
 
+      console.log("Taking screenshot...");
       // Take a high-quality screenshot
       const screenshotBuffer = await page.screenshot({
         type: "jpeg",
@@ -77,11 +94,14 @@ export const PuppeteerUtils = {
         fullPage: true,
       });
 
+      console.log("Screenshot taken!");
+
       return {
         metaData,
         screenshotBuffer
       };
     } finally {
+      console.log("Closing page...");
       await page.close();
     }
   }

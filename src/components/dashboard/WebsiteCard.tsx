@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Website } from "@/types";
 import { 
   Card, 
@@ -54,11 +53,10 @@ export function WebsiteCard({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative aspect-video w-full overflow-hidden bg-muted">
-        <Image
+        <img
           src={website.thumbnailUrl}
           alt={website.websiteName}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className={cn(
           "absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 transition-opacity duration-300",
@@ -83,7 +81,7 @@ export function WebsiteCard({
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2 overflow-hidden">
-            {website.faviconUrl && (
+            {website.faviconUrl && typeof website.faviconUrl === "string" && (
               <img 
                 src={website.faviconUrl} 
                 alt="" 

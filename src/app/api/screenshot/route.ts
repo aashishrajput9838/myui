@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { storage } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { v4 as uuidv4 } from "uuid";
-import { PuppeteerUtils } from "@/lib/puppeteer";
+import puppeteer from "puppeteer";
+import { v2 as cloudinary } from "cloudinary";
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
 
 /**
- * API route for capturing website screenshots and metadata.
- * Uses Puppeteer to crawl the site and Firebase Storage to store the image.
+ * Use Puppeteer + Cloudinary for real website screenshots!
  */
 export async function POST(req: NextRequest) {
-  let browser;
-  
+  let browser: any = null;
+
   try {
     const { url } = await req.json();
 
@@ -18,41 +23,75 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
 
-    // Launch browser
-    browser = await PuppeteerUtils.launchBrowser();
-    
-    // Process URL
-    const { metaData, screenshotBuffer } = await PuppeteerUtils.processUrl(browser, url);
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname;
 
-    // Upload to Firebase Storage
-    const fileName = `screenshots/${uuidv4()}.jpg`;
-    const storageRef = ref(storage, fileName);
-    
-    await uploadBytes(storageRef, screenshotBuffer, {
-      contentType: "image/jpeg",
+    console.log("Launching browser...");
+    // Launch Puppeteer
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+      ],
     });
 
-    const thumbnailUrl = await getDownloadURL(storageRef);
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1200, height: 800 });
+
+    console.log("Navigating to URL:", url);
+    // Wait for the page to load completely!
+    await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
+
+    console.log("Taking screenshot...");
+    // Take screenshot
+    const screenshotBuffer = await page.screenshot({ type: "jpeg", quality: 80 });
+
+    console.log("Getting metadata...");
+    // Get page title and description
+    const pageData = await page.evaluate(() => {
+      return {
+        title: document.title,
+        description: document.querySelector('meta[name="description"]')?.getAttribute("content") || "",
+      };
+    });
+
+    await browser.close();
+
+    console.log("Uploading to Cloudinary...");
+    // Upload screenshot to Cloudinary!
+    const uploadResult = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        {
+          folder: "myui-screenshots",
+          resource_type: "image",
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      ).end(screenshotBuffer);
+    });
+
+    // Google's free favicon service
+    const faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
 
     return NextResponse.json({
       success: true,
       data: {
-        thumbnailUrl,
-        ...metaData,
+        thumbnailUrl: (uploadResult as any).secure_url,
+        title: pageData.title || hostname,
+        description: pageData.description || `Saved website from ${hostname}`,
+        favicon: faviconUrl,
       },
     });
   } catch (error: any) {
-    console.error("Screenshot error:", error);
-    
-    const status = error.name === 'TimeoutError' ? 504 : 500;
-    const message = error.name === 'TimeoutError' 
-      ? "The website took too long to respond. Please try again." 
-      : (error.message || "Failed to capture screenshot");
-
-    return NextResponse.json({ error: message }, { status });
-  } finally {
+    console.error("Screenshot error details:", error);
     if (browser) {
       await browser.close();
     }
+    return NextResponse.json({ error: error.message || "Failed to process website" }, { status: 500 });
   }
 }

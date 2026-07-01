@@ -22,7 +22,7 @@ if (typeof window !== "undefined") {
 // Initialize Firebase singleton
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = getFirestore(app, "(default)"); // Explicitly specify default database
 const storage = getStorage(app);
 
 // Optional: Initialize Analytics
