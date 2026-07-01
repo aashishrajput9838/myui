@@ -1,4 +1,5 @@
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
@@ -30,21 +31,26 @@ export const ScreenshotService = {
       const hostname = urlObj.hostname;
 
       console.log("🚀 Launching Puppeteer for:", hostname);
+      
+      // Configure for Vercel serverless
+      const isLocal = process.env.NODE_ENV === "development";
+      const executablePath = isLocal 
+        ? undefined // Use local Chrome in dev
+        : await chromium.executablePath();
+
       browser = await puppeteer.launch({
+        args: chromium.args,
+        executablePath,
         headless: true,
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-          "--disable-gpu",
-        ],
       });
 
       const page = await browser.newPage();
       await page.setViewport({ width: 1200, height: 800 });
 
       console.log("🌐 Navigating to:", url);
+      // Wait 5 seconds for heavy sites to load
       await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
+      await new Promise(resolve => setTimeout(resolve, 5000));
 
       console.log("📸 Capturing screenshot...");
       const screenshotBuffer = await page.screenshot({ 
