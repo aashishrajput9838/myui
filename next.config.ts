@@ -27,21 +27,45 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 86400, // Cache images for 1 day
   },
   
-  // SWC optimizations
-  swcMinify: true,
-  
   // Compression
   compress: true,
   
-  // Enable Turbopack for faster builds in dev
-  experimental: {
-    turbo: {},
-  },
+  // Turbopack is enabled by default in Next.js 16
+  turbopack: {},
   
-  // Power of 2 alignments for better compression
-  webpack: (config) => {
-    config.optimization.minimize = true;
-    return config;
+  // Security Headers
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "X-DNS-Prefetch-Control",
+            value: "on",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "origin-when-cross-origin",
+          },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+          },
+        ],
+      },
+    ];
   },
 };
 

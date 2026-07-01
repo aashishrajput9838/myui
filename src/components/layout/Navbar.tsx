@@ -10,7 +10,8 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LayoutDashboard, LogOut, User, Settings, Bookmark } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { LayoutDashboard, LogOut, User, Settings, Bookmark, ShieldCheck } from "lucide-react";
 
 export function Navbar() {
   const { user, signInWithGoogle, signOut } = useAuth();
@@ -35,17 +36,37 @@ export function Navbar() {
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.photoURL} alt={user.name} />
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <div className="relative">
+                      <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+                        <AvatarImage src={user.photoURL} alt={user.name} />
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-green-500 border-2 border-background flex items-center justify-center">
+                        <ShieldCheck className="h-2.5 w-2.5 text-white" />
+                      </div>
+                    </div>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{user.name}</p>
+                <DropdownMenuContent className="w-64" align="end" forceMount>
+                  <div className="flex items-center justify-start gap-3 p-3 border-b">
+                    <div className="relative">
+                      <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                        <AvatarImage src={user.photoURL} alt={user.name} />
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-green-500 border-2 border-background flex items-center justify-center">
+                        <ShieldCheck className="h-2.5 w-2.5 text-white" />
+                      </div>
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{user.name}</p>
+                        <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-green-500/10 text-green-600 dark:text-green-400">
+                          <ShieldCheck className="h-3 w-3 mr-1" />
+                          Verified
+                        </Badge>
+                      </div>
                       <p className="w-[200px] truncate text-sm text-muted-foreground">
                         {user.email}
                       </p>

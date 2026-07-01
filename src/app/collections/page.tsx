@@ -1,6 +1,7 @@
 "use client";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { CreateCollectionDialog } from "@/components/collections/CreateCollectionDialog";
 import { useCollections } from "@/hooks/useCollections";
 import { 
@@ -37,39 +38,41 @@ export default function CollectionsPage() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="flex flex-col gap-8">
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Collections</h1>
-            <p className="text-muted-foreground">
-              Organize your inspirations into categories.
-            </p>
+    <ProtectedRoute>
+      <DashboardLayout>
+        <div className="flex flex-col gap-8">
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Collections</h1>
+              <p className="text-muted-foreground">
+                Organize your inspirations into categories.
+              </p>
+            </div>
+            <CreateCollectionDialog />
           </div>
-          <CreateCollectionDialog />
-        </div>
 
-        {loading ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-48 w-full rounded-xl" />
-            ))}
-          </div>
-        ) : collections.length === 0 ? (
-          <EmptyCollectionsState />
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {collections.map((col) => (
-              <CollectionCard 
-                key={col.id} 
-                collection={col} 
-                onDelete={() => handleDelete(col.id)} 
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </DashboardLayout>
+          {loading ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-48 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : collections.length === 0 ? (
+            <EmptyCollectionsState />
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {collections.map((col) => (
+                <CollectionCard 
+                  key={col.id} 
+                  collection={col} 
+                  onDelete={() => handleDelete(col.id)} 
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </DashboardLayout>
+    </ProtectedRoute>
   );
 }
 

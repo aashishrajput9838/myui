@@ -2,21 +2,88 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow users to read and write only their own user document
+    
+    // Helper function to validate authenticated user
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Users collection - strict validation
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      
+      allow create: if isAuthenticated() && isOwner(userId) &&
+        request.resource.data.keys().hasAll(['uid', 'name', 'email', 'photoURL', 'createdAt']) &&
+        request.resource.data.uid is string &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() <= 100 &&
+        request.resource.data.email is string &&
+        request.resource.data.email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$') &&
+        request.resource.data.photoURL is string;
     }
     
-    // Allow users to read and write only their own collections
+    // Collections collection - strict validation
     match /collections/{collectionId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow read, update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+      
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId) &&
+        request.resource.data.keys().hasAll(['userId', 'name', 'description', 'createdAt']) &&
+        request.resource.data.userId is string &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() >= 1 &&
+        request.resource.data.name.size() <= 100 &&
+        request.resource.data.description is string &&
+        request.resource.data.description.size() <= 500;
+        
+      allow update: if isAuthenticated() && isOwner(resource.data.userId) &&
+        request.resource.data.userId == resource.data.userId && // Prevent changing owner
+        request.resource.data.name is string &&
+        request.resource.data.name.size() >= 1 &&
+        request.resource.data.name.size() <= 100 &&
+        request.resource.data.description is string &&
+        request.resource.data.description.size() <= 500;
     }
     
-    // Allow users to read and write only their own websites
+    // Websites collection - strict validation
     match /websites/{websiteId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow read, update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+      
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId) &&
+        request.resource.data.keys().hasAll(['userId', 'collectionId', 'websiteName', 'url', 'thumbnailUrl', 'faviconUrl', 'websiteTitle', 'websiteDescription', 'tags', 'isFavorite', 'createdAt']) &&
+        request.resource.data.userId is string &&
+        request.resource.data.collectionId is string &&
+        request.resource.data.websiteName is string &&
+        request.resource.data.websiteName.size() <= 200 &&
+        request.resource.data.url is string &&
+        request.resource.data.url.matches('^https?://.*') &&
+        request.resource.data.url.size() <= 2048 &&
+        request.resource.data.thumbnailUrl is string &&
+        request.resource.data.faviconUrl is string &&
+        request.resource.data.websiteTitle is string &&
+        request.resource.data.websiteTitle.size() <= 500 &&
+        request.resource.data.websiteDescription is string &&
+        request.resource.data.websiteDescription.size() <= 2000 &&
+        request.resource.data.tags is list &&
+        request.resource.data.tags.size() <= 20 &&
+        request.resource.data.isFavorite is bool;
+        
+      allow update: if isAuthenticated() && isOwner(resource.data.userId) &&
+        request.resource.data.userId == resource.data.userId && // Prevent changing owner
+        (!request.resource.data.keys().hasAny(['collectionId', 'url', 'thumbnailUrl', 'faviconUrl', 'createdAt']) || // Only allow updating specific fields
+         request.resource.data.collectionId is string) && // If updating collectionId, it must be a string
+        request.resource.data.websiteName is string &&
+        request.resource.data.websiteName.size() <= 200 &&
+        request.resource.data.websiteTitle is string &&
+        request.resource.data.websiteTitle.size() <= 500 &&
+        request.resource.data.websiteDescription is string &&
+        request.resource.data.websiteDescription.size() <= 2000 &&
+        request.resource.data.tags is list &&
+        request.resource.data.tags.size() <= 20 &&
+        request.resource.data.isFavorite is bool;
     }
   }
 }
