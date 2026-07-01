@@ -33,9 +33,6 @@ const nextConfig: NextConfig = {
   // Turbopack is enabled by default in Next.js 16
   turbopack: {},
   
-  // Server Components Bundler Configuration
-  serverExternalPackages: ["@sparticuz/chromium"],
-  
   // Security Headers
   async headers() {
     return [

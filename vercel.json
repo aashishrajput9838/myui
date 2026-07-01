@@ -1,8 +1,0 @@
-{
-  "functions": {
-    "src/app/api/screenshot/route.ts": {
-      "runtime": "nodejs20.x",
-      "external": ["@sparticuz/chromium"]
-    }
-  }
-}

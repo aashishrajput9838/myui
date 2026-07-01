@@ -1,5 +1,3 @@
-import puppeteer from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
 import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
@@ -17,84 +15,54 @@ interface ScreenshotResult {
 }
 
 /**
- * Service for capturing website screenshots and uploading to Cloudinary
+ * Service for capturing website screenshots using Microlink API
  */
 export const ScreenshotService = {
   /**
-   * Capture a screenshot of a website and upload to Cloudinary
+   * Capture a screenshot of a website using Microlink (free tier)
    */
   captureWebsite: async (url: string): Promise<ScreenshotResult> => {
-    let browser: any = null;
-
     try {
       const urlObj = new URL(url);
       const hostname = urlObj.hostname;
 
-      console.log("🚀 Launching Puppeteer for:", hostname);
+      console.log("🚀 Capturing screenshot via Microlink for:", hostname);
       
-      // Configure for Vercel serverless
-      const isLocal = process.env.NODE_ENV === "development";
-      const executablePath = isLocal 
-        ? undefined // Use local Chrome in dev
-        : await chromium.executablePath();
-
-      browser = await puppeteer.launch({
-        args: chromium.args,
-        executablePath,
-        headless: true,
-      });
-
-      const page = await browser.newPage();
-      await page.setViewport({ width: 1200, height: 800 });
-
-      console.log("🌐 Navigating to:", url);
-      // Wait 5 seconds for heavy sites to load
-      await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
-      await new Promise(resolve => setTimeout(resolve, 5000));
-
-      console.log("📸 Capturing screenshot...");
-      const screenshotBuffer = await page.screenshot({ 
-        type: "jpeg", 
-        quality: 80 
-      });
-
-      console.log("📄 Extracting metadata...");
-      const pageData = await page.evaluate(() => {
-        return {
-          title: document.title,
-          description:
-            document.querySelector('meta[name="description"]')?.getAttribute("content") || "",
-        };
-      });
-
-      await browser.close();
-
+      // Use Microlink API to get screenshot and metadata
+      const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&meta=true&embed=screenshot.url&waitFor=5000`;
+      
+      const response = await fetch(microlinkUrl);
+      if (!response.ok) {
+        throw new Error(`Microlink API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.data) {
+        throw new Error("No data received from Microlink");
+      }
+      
+      const screenshotUrl = data.data.screenshot?.url;
+      const title = data.data.title || hostname;
+      const description = data.data.description || `Saved website from ${hostname}`;
+      
       console.log("☁️ Uploading to Cloudinary...");
-      const uploadResult = await new Promise<any>((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          {
-            folder: "myui-screenshots",
-            resource_type: "image",
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        ).end(screenshotBuffer);
+      
+      // Upload screenshot from Microlink to Cloudinary
+      const uploadResult = await cloudinary.uploader.upload(screenshotUrl, {
+        folder: "myui-screenshots",
+        resource_type: "image",
       });
-
+      
       const faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
-
+      
       return {
         thumbnailUrl: uploadResult.secure_url,
-        title: pageData.title || hostname,
-        description: pageData.description || `Saved website from ${hostname}`,
+        title,
+        description,
         faviconUrl,
       };
     } catch (error: any) {
-      if (browser) {
-        await browser.close();
-      }
       console.error("❌ Screenshot error details:", error);
       throw error;
     }
