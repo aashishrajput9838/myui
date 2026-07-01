@@ -1,8 +1,4 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
-import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,25 +10,13 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Debug log to verify environment variables in the browser
-if (typeof window !== "undefined") {
-  console.log("🛠️ Firebase Initializing with Project ID:", firebaseConfig.projectId);
-}
-
-// Initialize Firebase singleton
+// Initialize Firebase app once
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app, "(default)"); // Explicitly specify default database
-const storage = getStorage(app);
 
-// Optional: Initialize Analytics
-let analytics: Analytics | undefined;
-if (typeof window !== "undefined") {
-  isSupported().then((supported) => {
-    if (supported) {
-      analytics = getAnalytics(app);
-    }
-  });
-}
+// Lazy-load Firebase modules to reduce initial bundle size
+export const getAuth = async () => (await import("firebase/auth")).getAuth(app);
+export const getFirestore = async () => (await import("firebase/firestore")).getFirestore(app);
+export const getStorage = async () => (await import("firebase/storage")).getStorage(app);
 
-export { app, auth, db, storage, analytics };
+// Keep direct exports for backward compatibility (use lazy versions for better performance)
+export { app };
